@@ -16,8 +16,9 @@
 (handlers/register-handler
   :set-chat-input-text
   (fn [{:keys [current-chat-id chats chat-ui-props] :as db} [_ text chat-id]]
-    (let [chat-id   (or chat-id current-chat-id)
-          selection (get-in chat-ui-props [chat-id :selection])]
+    (let [chat-id          (or chat-id current-chat-id)
+          selection        (get-in chat-ui-props [chat-id :selection])
+          ends-with-space? (input-model/text-ends-with-space? text)]
       (dispatch [:update-suggestions chat-id text])
 
       (if-let [{command :command} (input-model/selected-chat-command db chat-id text)]
@@ -25,7 +26,7 @@
               text-splitted    (input-model/split-command-args text)
               new-args         (rest text-splitted)
               modifiers        (input-model/add-modifiers (:params command) new-args)
-              addition         (if (input-model/text-ends-with-space? text)
+              addition         (if ends-with-space?
                                  const/spacing-char)
               new-params       {:modified-text (str (input-model/apply-modifiers text-splitted modifiers)
                                                     addition)
@@ -34,6 +35,7 @@
                                                                                  old-args
                                                                                  selection)
                                                     addition)}]
+          (log/debug "ALWX new-params" new-params)
           (update-in db [:chats chat-id] merge new-params))
         (update-in db [:chats chat-id] merge {:input-text    text
                                               :modified-text nil})))))
