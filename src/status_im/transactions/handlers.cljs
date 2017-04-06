@@ -130,12 +130,13 @@
 (register-handler ::transaction-queued
   (after #(dispatch [:navigate-to-modal :pending-transactions]))
   (fn [db [_ {:keys [id message_id args]}]]
-    (let [{:keys [from to value]} args]
+    (let [{:keys [from to value data]} args]
       (if (valid-hex? to)
         (let [transaction {:id         id
                            :from       from
                            :to         to
                            :value      (.toDecimal js/Web3.prototype value)
+                           :data       data
                            :message-id message_id}]
           (assoc-in db [:transactions-queue id] transaction))
         db))))
@@ -152,11 +153,11 @@
                                                     :hash       hash
                                                     :message-id message-id}])
                 (dispatch [::check-completed-transaction!
-                           {:message-id message-id}])
-                (when (or (= modal :pending-transactions)
-                          (= modal :transaction-details))
-                  (dispatch [:navigate-to-modal :confirmation-success])))
-            (dispatch [::remove-transaction id])))))))
+                           {:message-id message-id}]))
+            (dispatch [::remove-transaction id]))
+          (when (or (= modal :pending-transactions)
+                    (= modal :transaction-details))
+            (dispatch [:navigate-to-modal :confirmation-success])))))))
 
 (register-handler ::add-transactions-hash
   (fn [db [_ {:keys [id hash message-id]}]]

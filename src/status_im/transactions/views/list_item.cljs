@@ -10,16 +10,18 @@
 
 (defview item-image [recipient]
   [photo-path [:photo-path (:whisper-identity recipient)]]
-  (let [photo (if (string/starts-with? photo-path "contacts://")
-                (->> (string/replace photo-path #"contacts://" "")
-                     (keyword)
-                     (get resources/contacts))
-                {:uri photo-path})]
-    [rn/view {:style st/item-photo}
-     [rn/image {:source photo
-                :style  st/photo}]
-     [rn/image {:source {:uri :icon_arrow_left_white}
-                :style  st/item-photo-icon}]]))
+  [rn/view {:style st/item-photo}
+   (if photo-path
+     (let [photo (if (string/starts-with? photo-path "contacts://")
+                   (->> (string/replace photo-path #"contacts://" "")
+                        (keyword)
+                        (get resources/contacts))
+                   {:uri photo-path})]
+       [rn/image {:source photo
+                  :style  st/photo}])
+     [rn/view {:style st/photo}])
+   [rn/image {:source {:uri :icon_arrow_left_white}
+              :style  st/item-photo-icon}]])
 
 (defn item-info [recipient-name value]
   [rn/view {:style st/item-info}
