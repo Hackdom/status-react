@@ -35,7 +35,10 @@
   [transactions [:transactions]
    {:keys [password]} [:get :confirm-transactions]
    confirmed?        [:get-in [:transactions-list-ui-props :confirmed?]]]
-  {:component-will-unmount #(rf/dispatch [:set-in [:transactions-list-ui-props :confirmed?] false])}
+
+  {:component-did-update #(when-not (seq transactions) (rf/dispatch [:navigate-back]))
+   :component-will-unmount #(rf/dispatch [:set-in [:transactions-list-ui-props :confirmed?] false])}
+
   [rn/view st/transactions-screen
    [status-bar/status-bar {:type :transparent}]
    [toolbar-view transactions]

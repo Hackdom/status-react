@@ -38,28 +38,32 @@
    recipient       [:contact-by-address to]]
   [rn/view
    [detail-item (i18n/label :t/to) (:name recipient) true]
-   [detail-item (i18n/label :t/from) (:name current-account) true]])
+   [detail-item (i18n/label :t/from) (:name current-account) true]
+   [detail-data data]])
 
 (defview transaction-details []
   [{:keys [id] :as transaction} [:get :selected-transaction]
    {:keys [password]}           [:get :confirm-transactions]
    confirmed?                   [:get-in [:transaction-details-ui-props :confirmed?]]]
 
-  {:component-will-unmount #(rf/dispatch [:set-in [:transaction-details-ui-props :confirmed?] false])}
+  {:component-did-update #(when-not transaction (rf/dispatch [:navigate-to-modal :pending-transactions]))
+   :component-will-unmount #(rf/dispatch [:set-in [:transaction-details-ui-props :confirmed?] false])}
 
   [rn/view {:style st/transactions-screen}
    [status-bar/status-bar {:type :transparent}]
    [toolbar-view]
-   [rn/scroll-view st/details-screen-content-container
-    [transactions-list-item/view transaction #(rf/dispatch [:navigate-to-modal :pending-transactions])]
-    (when platform/ios? [common/separator {} st/details-separator])
-    [details transaction]]
+   (when transaction
+     [rn/scroll-view st/details-screen-content-container
+     [transactions-list-item/view transaction #(rf/dispatch [:navigate-to-modal :pending-transactions])]
+     (when platform/ios? [common/separator {} st/details-separator])
+     [details transaction]])
    (when confirmed? [password-form/view 1])
-   (let [confirm-text (if confirmed?
-                        (i18n/label :t/confirm)
-                        (i18n/label-pluralize 1 :t/confirm-transactions))
-         confirm-fn   (if confirmed?
-                        #(do (rf/dispatch [:accept-transaction password id])
-                             (rf/dispatch [:set :confirmed-transactions-count 1]))
-                        #(rf/dispatch [:set-in [:transaction-details-ui-props :confirmed?] true]))]
-     [sticky-button/sticky-button confirm-text confirm-fn])])
+   (when transaction
+     (let [confirm-text (if confirmed?
+                          (i18n/label :t/confirm)
+                          (i18n/label-pluralize 1 :t/confirm-transactions))
+           confirm-fn   (if confirmed?
+                          #(do (rf/dispatch [:accept-transaction password id])
+                               (rf/dispatch [:set :confirmed-transactions-count 1]))
+                          #(rf/dispatch [:set-in [:transaction-details-ui-props :confirmed?] true]))]
+       [sticky-button/sticky-button confirm-text confirm-fn]))])

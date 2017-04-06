@@ -201,9 +201,14 @@
         (not= discard-code error_code)
         (do (when message_id
               (dispatch [::remove-pending-message message_id]))
+            (dispatch [:clear-selected-transaction])
             (dispatch [::remove-transaction id]))
 
         :else nil))))
+
+(register-handler :clear-selected-transaction
+  (fn [db _]
+    (dissoc db :selected-transaction)))
 
 (def attempts-limit 3)
 
